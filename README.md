@@ -1,3 +1,3 @@
-Backend for phonebook app with Express
+Phonebook app with Express
 
-https://phonebook-backend-jkhv.onrender.com/api/persons
+https://phonebook-backend-jkhv.onrender.com

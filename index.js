@@ -1,31 +1,14 @@
+require('dotenv').config()
 const express = require('express')
 const nodemon = require('nodemon')
 const morgan = require('morgan')
 const cors = require('cors')
-const app = express()
+const Entry = require('./modules/entry')
+const entry = require('./modules/entry')
 
-let entries = [
-  { 
-    id: 1,
-    name: "Arto Hellas", 
-    number: "040-123456"
-  },
-  { 
-    id: 2,
-    name: "Ada Lovelace", 
-    number: "39-44-5323523"
-  },
-  { 
-    id: 3,
-    name: "Dan Abramov", 
-    number: "12-43-234345"
-  },
-  { 
-    id: 4,
-    name: "Mary Poppendieck", 
-    number: "39-23-6423122"
-  }
-]
+const URL = `mongodb+srv://phanlan:phanbo96@cluster0.nrw7ci1.mongodb.net/phonebookApp?retryWrites=true&w=majority`
+
+const app = express()
 
 app.use(cors())
 app.use(express.json())
@@ -37,44 +20,45 @@ morgan.token('request-body', (req, res) => {
 app.use(morgan(':method :url :status :res[content-length] - :response-time ms :request-body'))
 
 app.get("/api/persons", (req, res) => {
+  Entry.find({}).then(entries => {
     console.log(req.body)
     res.json(entries)
+  })
 })
 
 app.get('/api/persons/:id', (req, res) => {
-    const id = Number(req.params.id)
-    const entry = entries.find(entry => entry.id === id)
-
+  Entry.findById(req.params.id).then(entry => {
     if (entry) {
-        res.json(entry)
+      res.json(entry)
     } else {
-        res.status(404).end()
+      res.status(404).end()
     }
+  })
+  .catch(error => {
+    console.log(error)
+    res.status(400).send({ error: 'malformated id'})
+  })
 })
+  
 
 app.post('/api/persons', (req, res) => {
-    const body = req.body
-    const id = Math.floor((Math.random() * 100) + 1)
+  const body = req.body
+  console.log(body)
+  
+  if (!body.name || ! body.number) {
+    return res.status(400).json({
+      error: "Missing name or number"
+    })
+  }
 
-    if (!body.name || ! body.number) {
-      return res.status(400).json({
-        error: "Missing name or number"
-      })
-    }
+  const newEntry = new Entry({
+    name: body.name,
+    number: body.number
+  })
 
-    else if (entries.find(entry => entry.name === body.name)) {
-      return res.status(400).json({
-        error: "Name has already existed"
-      })
-    }
-    const newEntry = {
-      id: id,
-      name: body.name,
-      number: body.number
-    }
-
-    entries = entries.concat(newEntry)
-    res.json(newEntry)
+  newEntry.save().then(savedEntry => {
+    res.json(savedEntry)
+  })
 })
 
 app.delete('/api/persons/:id', (req, res) => {
@@ -97,7 +81,6 @@ const unknownEndpoint = (req, res) => {
 
 app.use(unknownEndpoint)
 
-const PORT = 3001
-app.listen(PORT, () => {
-    console.log(`Server started on port ${PORT}`)
+app.listen(process.env.PORT, () => {
+    console.log(`Server started on port ${process.env.PORT}`)
 })

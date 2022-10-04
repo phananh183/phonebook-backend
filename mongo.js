@@ -15,8 +15,16 @@ const password = process.argv[2]
 const url = `mongodb+srv://phanlan:${password}@cluster0.nrw7ci1.mongodb.net/phonebookApp?retryWrites=true&w=majority`
 
 const phonebookEntryScheme = new mongoose.Schema({
-    name: String,
-    number: String
+    name: {
+      type: String,
+      minLength: 2,
+      required: true
+    },
+    number: {
+      type: String,
+      minLength: 5,
+      required: true
+    }
 })
 
 const Entry = mongoose.model("Entry", phonebookEntryScheme)
